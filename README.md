@@ -13,10 +13,8 @@ The goal of this repo is **not** to provide a polished demo, but to show how a d
 
 - A **hand pose estimation** example
 - Uses **OAK Containers**
-- Demonstrates **remote debugging** using **VS Code**
+- Demonstrates **remote debugging** using **Web-PDB** (web-based Python debugger)
 - Intended purely for **debug / development experimentation**
-
-⚠️ **Note:** This setup is a bit wonky by nature. You may need to retry the debugger multiple times before it successfully attaches.
 
 ---
 
@@ -42,54 +40,69 @@ Start the application using `oak-debug`:
 - `<APP_PATH>` – path to the application directory
 - `<DEVICE_IP>` – IP address of your OAK device
 
-After running the command, **wait for the app to fully start** on the device.
+The script will:
+1. Start the app on the OAK device
+2. Wait for the Web-PDB server to be ready (port 5555)
+3. Automatically open your web browser to the debugger interface
 
 ---
 
-### 3. Attach the Debugger in VS Code
+### 3. Debug in Your Web Browser
 
-1. Open the repository in **VS Code**
-2. Go to the **Run & Debug** panel
-3. Select the launch configuration named:
+Once the browser opens, you'll see the **Web-PDB interface** at:
 
 ```
-Attach to OAK
+http://<DEVICE_IP>:5555
 ```
 
-4. Start debugging
+The Web-PDB interface provides:
+- **Current file** view with syntax highlighting
+- **Globals** and **Locals** variable inspection
+- Full PDB command support in the web console
+- Command history (arrow keys UP/DOWN)
 
-If successful, the debugger will attach and you should eventually see an **error appear in the code**, indicating that debugging is active.
+You can use standard PDB commands like:
+- `n` (next line)
+- `s` (step into)
+- `c` (continue)
+- `p <variable>` (print variable)
+- `pp <variable>` (pretty print)
+- `l` (list code)
+- `w` (where/stack trace)
+- `q` (quit)
+
+**Note:** It's recommended to use only one browser session at a time. Multiple browser windows may display incorrect data.
+
+---
+
+## Customizing Breakpoints
+
+The debugger is set to break at the start of the pipeline execution in `main.py`. To add additional breakpoints, add:
+
+```python
+import web_pdb; web_pdb.set_trace()
+```
+
+at any point in your code where you want to pause execution.
+
+You can also use Python 3.7+ `breakpoint()` function by setting:
+```bash
+export PYTHONBREAKPOINT="web_pdb.set_trace"
+```
 
 ---
 
 ## Known Issues / Quirks
 
-- Debugging is **not always reliable**
-- You may need to:
-  - Stop the debugger
-  - Re-run it multiple times
-- This is expected behavior for this example
-
----
-
-## Stopping the Debugging Process
-
-To stop the debugging process and run the example again, you must explicitly stop the running app on the device:
-
-```bash
-oakctl app stop 00000000-0000-0000-0000-000000000000
-```
-
-After stopping the app:
-
-1. Run the app again using `./oak-debug`
-2. Re-attach the debugger from VS Code if needed
+- The debugger will pause execution when it hits `web_pdb.set_trace()`
+- Make sure port 5555 is accessible from your machine to the OAK device
+- If the browser doesn't open automatically, manually navigate to `http://<DEVICE_IP>:5555`
 
 ---
 
 ## Final Notes
 
 This repository is intentionally minimal and experimental.  
-If something feels rough around the edges — that’s expected 🙂
+If something feels rough around the edges — that's expected 🙂
 
 Happy debugging 🚀

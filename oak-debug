@@ -3,7 +3,7 @@ set -e
 
 APP_PATH="${1:-.}"
 DEVICE_IP="$2"
-PORT=5678
+PORT=5555
 
 if [ -z "$DEVICE_IP" ]; then
   echo "Usage: ./oak-debug <APP_PATH> <DEVICE_IP>"
@@ -14,36 +14,27 @@ fi
 echo "▶ Starting app on device..."
 oakctl app run -d "$DEVICE_IP" "$APP_PATH" &
 
-echo "▶ Creating VS Code debug configuration..."
-mkdir -p .vscode
-cat > .vscode/launch.json <<EOF
-{
-  "version": "0.2.0",
-  "configurations": [
-    {
-      "name": "Attach to OAK",
-      "type": "python",
-      "request": "attach",
-      "stopOnEntry": true,
-      "justMyCode": false,
-      "connect": { "host": "$DEVICE_IP", "port": $PORT },
-      "pathMappings": [
-        { "localRoot": "\${workspaceFolder}", "remoteRoot": "/app" }
-      ]
-    }
-  ]
-}
-EOF
-
-echo "▶ Waiting for debugpy at $DEVICE_IP:$PORT ..."
+echo "▶ Waiting for web-pdb server at $DEVICE_IP:$PORT ..."
 until nc -z "$DEVICE_IP" "$PORT"; do
   sleep 1
 done
 
-echo "▶ Opening VS Code..."
-code "$APP_PATH"
+echo "▶ Web-PDB is ready!"
+echo "▶ Opening web browser to http://$DEVICE_IP:$PORT"
+echo ""
 
-echo "▶ Starting VS Code debugger..."
-code --command workbench.action.debug.selectandstart
+# Try to open browser (works on macOS, Linux with xdg-open, or Windows)
+if command -v open >/dev/null 2>&1; then
+  # macOS
+  open "http://$DEVICE_IP:$PORT"
+elif command -v xdg-open >/dev/null 2>&1; then
+  # Linux
+  xdg-open "http://$DEVICE_IP:$PORT"
+elif command -v start >/dev/null 2>&1; then
+  # Windows
+  start "http://$DEVICE_IP:$PORT"
+else
+  echo "Please open your browser and navigate to: http://$DEVICE_IP:$PORT"
+fi
 
 wait
