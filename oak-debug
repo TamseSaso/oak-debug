@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+set -e
+
+APP_PATH="${1:-.}"
+DEVICE_IP="$2"
+PORT=5678
+
+if [ -z "$DEVICE_IP" ]; then
+  echo "Usage: ./oak-debug <APP_PATH> <DEVICE_IP>"
+  echo "Example: ./oak-debug . 192.168.1.198"
+  exit 1
+fi
+
+echo "▶ Starting app on device..."
+oakctl app run -d "$DEVICE_IP" "$APP_PATH" &
+
+echo "▶ Creating VS Code debug configuration..."
+mkdir -p .vscode
+cat > .vscode/launch.json <<EOF
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Attach to OAK",
+      "type": "python",
+      "request": "attach",
+      "stopOnEntry": true,
+      "justMyCode": false,
+      "connect": { "host": "$DEVICE_IP", "port": $PORT },
+      "pathMappings": [
+        { "localRoot": "\${workspaceFolder}", "remoteRoot": "/app" }
+      ]
+    }
+  ]
+}
+EOF
+
+echo "▶ Waiting for debugpy at $DEVICE_IP:$PORT ..."
+until nc -z "$DEVICE_IP" "$PORT"; do
+  sleep 1
+done
+
+echo "▶ Opening VS Code..."
+code "$APP_PATH"
+
+echo "▶ Starting VS Code debugger..."
+code --command workbench.action.debug.selectandstart
+
+wait
