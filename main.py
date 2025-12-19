@@ -31,7 +31,7 @@ with dai.Pipeline(device) as pipeline:
     print("Creating pipeline...")
 
     # detection model
-    det_model_description = dai.NNModelDescription.fromYamlFile(
+    det_model_description = dai.NNModelDescriptions.fromYamlFile(
         f"mediapipe_palm_detection.{platform}.yaml"
     )
     det_nn_archive = dai.NNArchive(dai.getModelFromZoo(det_model_description))
